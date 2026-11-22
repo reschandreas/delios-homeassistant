@@ -33,7 +33,7 @@ class DeliosAlarmBinarySensor(CoordinatorEntity, BinarySensorEntity):
     def is_on(self):
         # status variables
         for src in ("status", "dashboard"):
-            data = self.coordinator.data.get(src, {})
+            data = (self.coordinator.data or {}).get(src, {})
             vars_ = {v["ctrl_name"]: v["value"] for v in (data.get("variables") or [])}
             if self._key in vars_:
                 try:
