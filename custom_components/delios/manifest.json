@@ -1,0 +1,11 @@
+{
+  "domain": "delios",
+  "name": "Delios",
+  "codeowners": ["@reschandreas"],
+  "config_flow": true,
+  "documentation": "https://github.com/reschandreas/delios-homeassistant",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/reschandreas/delios-homeassistant/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
