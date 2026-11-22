@@ -52,19 +52,20 @@ def _device_info(coordinator, entry):
 
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator: DeliosCoordinator = hass.data[DOMAIN][entry.entry_id]
+    data = coordinator.data or {}
     entities = []
 
     # Dashboard sensors
     dash_vars = {
         v["ctrl_name"]: v["value"]
-        for v in (coordinator.data.get("dashboard", {}).get("variables") or [])
+        for v in (data.get("dashboard", {}).get("variables") or [])
     }
     for key, (name, unit, dev, sc) in DASHBOARD_SENSORS.items():
         if key in dash_vars:
             entities.append(DeliosDashboardSensor(coordinator, entry, key, name, unit, dev, sc))
 
     # Totalizer sensors
-    totals = coordinator.data.get("totalizer", {}).get("totalizers") or {}
+    totals = data.get("totalizer", {}).get("totalizers") or {}
     for key, (name, unit, dev, sc) in TOTALIZER_SENSORS.items():
         if key in totals:
             entities.append(DeliosTotalizerSensor(coordinator, entry, key, name, unit, dev, sc))
@@ -72,14 +73,14 @@ async def async_setup_entry(hass, entry, async_add_entities):
     # Firmware sensors
     fw_vars = {
         v["ctrl_name"]: v["value"]
-        for v in (coordinator.data.get("firmware", {}).get("variables") or [])
+        for v in (data.get("firmware", {}).get("variables") or [])
     }
     for key, (name, unit, dev, sc) in FIRMWARE_SENSORS.items():
         if key in fw_vars:
             entities.append(DeliosFirmwareSensor(coordinator, entry, key, name))
 
     # System status sensors
-    ss = coordinator.data.get("system_status") or {}
+    ss = data.get("system_status") or {}
     for key, (name, unit, dev, sc) in SYSTEM_SENSORS.items():
         if key in ss:
             entities.append(DeliosSystemSensor(coordinator, entry, key, name))
@@ -126,7 +127,7 @@ class DeliosDashboardSensor(_Base, SensorEntity):
     def native_value(self):
         vars_ = {
             v["ctrl_name"]: v["value"]
-            for v in (self.coordinator.data.get("dashboard", {}).get("variables") or [])
+            for v in ((self.coordinator.data or {}).get("dashboard", {}).get("variables") or [])
         }
         val = vars_.get(self._key)
         if val is None:
@@ -159,7 +160,7 @@ class DeliosTotalizerSensor(_Base, SensorEntity):
 
     @property
     def native_value(self):
-        totals = self.coordinator.data.get("totalizer", {}).get("totalizers") or {}
+        totals = (self.coordinator.data or {}).get("totalizer", {}).get("totalizers") or {}
         val = totals.get(self._key)
         if val is None:
             return None
@@ -180,7 +181,7 @@ class DeliosFirmwareSensor(_Base, SensorEntity):
     def native_value(self):
         vars_ = {
             v["ctrl_name"]: v["value"]
-            for v in (self.coordinator.data.get("firmware", {}).get("variables") or [])
+            for v in ((self.coordinator.data or {}).get("firmware", {}).get("variables") or [])
         }
         return vars_.get(self._key)
 
@@ -194,7 +195,7 @@ class DeliosSystemSensor(_Base, SensorEntity):
 
     @property
     def native_value(self):
-        ss = self.coordinator.data.get("system_status") or {}
+        ss = (self.coordinator.data or {}).get("system_status") or {}
         val = ss.get(self._key)
         if isinstance(val, bool):
             return "on" if val else "off"
@@ -213,12 +214,12 @@ class DeliosLastAlarmSensor(_Base, SensorEntity):
 
     @property
     def native_value(self):
-        alarms = self.coordinator.data.get("alarms", {}).get("alarms") or []
+        alarms = (self.coordinator.data or {}).get("alarms", {}).get("alarms") or []
         if not alarms:
             return None
         return alarms[0].get("desc")
 
     @property
     def extra_state_attributes(self):
-        alarms = self.coordinator.data.get("alarms", {}).get("alarms") or []
+        alarms = (self.coordinator.data or {}).get("alarms", {}).get("alarms") or []
         return {"recent": alarms[:10]}
