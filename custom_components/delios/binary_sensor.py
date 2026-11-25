@@ -8,7 +8,23 @@ from .coordinator import DeliosCoordinator
 
 async def async_setup_entry(hass, entry, async_add_entities):
     coordinator: DeliosCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entities = [DeliosAlarmBinarySensor(coordinator, entry, key, name) for key, name in ALARM_BINARY.items()]
+    data = coordinator.data or {}
+    # Only create binary sensors for alarm keys the device actually reports,
+    # so we don't leave permanently-unavailable entities behind.
+    status_vars = {
+        v["ctrl_name"]
+        for v in ((data.get("status", {}) or {}).get("variables") or [])
+    }
+    dashboard_vars = {
+        v["ctrl_name"]
+        for v in ((data.get("dashboard", {}) or {}).get("variables") or [])
+    }
+    available_keys = status_vars | dashboard_vars
+    entities = [
+        DeliosAlarmBinarySensor(coordinator, entry, key, name)
+        for key, name in ALARM_BINARY.items()
+        if key in available_keys
+    ]
     async_add_entities(entities)
 
 

@@ -22,20 +22,27 @@ class DeliosCoordinator(DataUpdateCoordinator):
         self.api = api
 
     async def _async_update_data(self):
-        try:
-            dashboard = await self.api.dashboard()
-            status = await self.api.status()
-            alarms = await self.api.alarms()
-            totalizer = await self.api.info_totalizer()
-            firmware = await self.api.info_firmware()
-            system_status = await self.api.system_status()
-        except DeliosApiError as err:
-            raise UpdateFailed(str(err)) from err
-        return {
-            "dashboard": dashboard,
-            "status": status,
-            "alarms": alarms,
-            "totalizer": totalizer,
-            "firmware": firmware,
-            "system_status": system_status,
-        }
+        import asyncio
+
+        last_err = None
+        for attempt in range(2):
+            try:
+                dashboard = await self.api.dashboard()
+                status = await self.api.status()
+                alarms = await self.api.alarms()
+                totalizer = await self.api.info_totalizer()
+                firmware = await self.api.info_firmware()
+                system_status = await self.api.system_status()
+                return {
+                    "dashboard": dashboard,
+                    "status": status,
+                    "alarms": alarms,
+                    "totalizer": totalizer,
+                    "firmware": firmware,
+                    "system_status": system_status,
+                }
+            except DeliosApiError as err:
+                last_err = err
+                if attempt == 0:
+                    await asyncio.sleep(2)
+        raise UpdateFailed(str(last_err)) from last_err
