@@ -7,7 +7,6 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.util import dt as dt_util
 
 from .const import (
     ALARM_BINARY,
@@ -139,7 +138,6 @@ class DeliosTotalizerSensor(_Base, SensorEntity):
         self._attr_name = f"Delios {name}"
         self._attr_unique_id = f"{entry.entry_id}_tot_{key}"
         self._unit = unit
-        self._last_value = None
 
     @property
     def native_unit_of_measurement(self):
@@ -154,27 +152,15 @@ class DeliosTotalizerSensor(_Base, SensorEntity):
         return SensorStateClass.TOTAL_INCREASING
 
     @property
-    def last_reset(self):
-        return getattr(self, "_attr_last_reset", None)
-
-    @property
     def native_value(self):
         totals = (self.coordinator.data or {}).get("totalizer", {}).get("totalizers") or {}
         val = totals.get(self._key)
         if val is None:
             return None
         try:
-            new = float(val)
+            return float(val)
         except (ValueError, TypeError):
             return val
-        # Home Assistant's Energy dashboard requires total_increasing sensors to
-        # carry a last_reset value before they can be selected as a source.
-        # Seed it on the first reading and refresh it whenever the counter resets
-        # (e.g. after a device reboot) so a drop is not turned into a spike.
-        if self._last_value is None or new < self._last_value:
-            self._attr_last_reset = dt_util.utcnow()
-        self._last_value = new
-        return new
 
 
 class DeliosFirmwareSensor(_Base, SensorEntity):
