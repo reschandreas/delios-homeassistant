@@ -75,6 +75,7 @@ def _load_sensor_module():
         SensorDeviceClass=SensorDeviceClass,
         SensorEntity=SensorEntity,
         SensorStateClass=SensorStateClass,
+        RestoreSensor=SensorEntity,
     )
     sys.modules["homeassistant.helpers.update_coordinator"] = _module(
         "homeassistant.helpers.update_coordinator",

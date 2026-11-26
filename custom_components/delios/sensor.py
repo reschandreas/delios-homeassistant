@@ -17,6 +17,7 @@ from .const import (
     TOTALIZER_SENSORS,
 )
 from .coordinator import DeliosCoordinator
+from .energy import DeliosCalculatedEnergySensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,6 +63,21 @@ async def async_setup_entry(hass, entry, async_add_entities):
     for key, (name, unit, dev, sc) in TOTALIZER_SENSORS.items():
         if key in totals:
             entities.append(DeliosTotalizerSensor(coordinator, entry, key, name, unit, dev, sc))
+
+    # Calculated energy from live power
+    entities.extend(
+        [
+            DeliosCalculatedEnergySensor(
+                coordinator, entry, "PowerGrid", "Grid Import Energy", 1
+            ),
+            DeliosCalculatedEnergySensor(
+                coordinator, entry, "PowerGrid", "Grid Export Energy", -1
+            ),
+            DeliosCalculatedEnergySensor(
+                coordinator, entry, "PowerPV", "Calculated PV Energy", 1
+            ),
+        ]
+    )
 
     # Firmware sensors
     fw_vars = {
